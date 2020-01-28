@@ -97,6 +97,9 @@ class FlexCounter
         static void addPortCounterPlugin(
                 _In_ std::string sha,
                 _In_ std::string instanceId);
+        static void addRifCounterPlugin(
+                _In_ std::string sha,
+                _In_ std::string instanceId);
         static void addQueueCounterPlugin(
                 _In_ std::string sha,
                 _In_ std::string instanceId);
@@ -264,6 +267,7 @@ class FlexCounter
         // Plugins
         std::set<std::string> m_queuePlugins;
         std::set<std::string> m_portPlugins;
+        std::set<std::string> m_rifPlugins;
         std::set<std::string> m_priorityGroupPlugins;
         std::set<std::string> m_bufferPoolPlugins;
 

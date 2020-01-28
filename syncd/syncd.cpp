@@ -3299,6 +3299,14 @@ void processFlexCounterGroupEvent(
                     FlexCounter::addPortCounterPlugin(sha, groupName);
                 }
             }
+            else if (field == RIF_PLUGIN_FIELD)
+            {
+                auto shaStrings = swss::tokenize(value, ',');
+                for (const auto &sha : shaStrings)
+                {
+                    FlexCounter::addRifCounterPlugin(sha, groupName);
+                }
+            }
             else if (field == BUFFER_POOL_PLUGIN_FIELD)
             {
                 auto shaStrings = swss::tokenize(value, ',');

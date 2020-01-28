@@ -957,14 +957,37 @@ void FlexCounter::addPortCounterPlugin(
     std::lock_guard<std::mutex> lkMgr(fc.m_mtx);
 
     if (fc.m_portPlugins.find(sha) != fc.m_portPlugins.end() ||
-            fc.m_queuePlugins.find(sha) != fc.m_queuePlugins.end() ||
-            fc.m_priorityGroupPlugins.find(sha) != fc.m_priorityGroupPlugins.end())
+        fc.m_rifPlugins.find(sha) != fc.m_rifPlugins.end() ||
+        fc.m_queuePlugins.find(sha) != fc.m_queuePlugins.end() ||
+        fc.m_priorityGroupPlugins.find(sha) != fc.m_priorityGroupPlugins.end())
     {
         SWSS_LOG_ERROR("Plugin %s already registered", sha.c_str());
     }
 
     fc.m_portPlugins.insert(sha);
     SWSS_LOG_NOTICE("Port counters plugin %s registered", sha.c_str());
+}
+
+void FlexCounter::addRifCounterPlugin(
+        _In_ std::string sha,
+        _In_ std::string instanceId)
+{
+    SWSS_LOG_ENTER();
+
+    FlexCounter &fc = getInstance(instanceId);
+
+    std::lock_guard<std::mutex> lkMgr(fc.m_mtx);
+
+    if (fc.m_portPlugins.find(sha) != fc.m_portPlugins.end() ||
+        fc.m_rifPlugins.find(sha) != fc.m_rifPlugins.end() ||
+        fc.m_queuePlugins.find(sha) != fc.m_queuePlugins.end() ||
+        fc.m_priorityGroupPlugins.find(sha) != fc.m_priorityGroupPlugins.end())
+    {
+        SWSS_LOG_ERROR("Plugin %s already registered", sha.c_str());
+    }
+
+    fc.m_rifPlugins.insert(sha);
+    SWSS_LOG_NOTICE("Rif counters plugin %s registered", sha.c_str());
 }
 
 void FlexCounter::addQueueCounterPlugin(
@@ -978,8 +1001,9 @@ void FlexCounter::addQueueCounterPlugin(
     std::lock_guard<std::mutex> lkMgr(fc.m_mtx);
 
     if (fc.m_portPlugins.find(sha) != fc.m_portPlugins.end() ||
-            fc.m_queuePlugins.find(sha) != fc.m_queuePlugins.end() ||
-            fc.m_priorityGroupPlugins.find(sha) != fc.m_priorityGroupPlugins.end())
+        fc.m_rifPlugins.find(sha) != fc.m_rifPlugins.end() ||    
+        fc.m_queuePlugins.find(sha) != fc.m_queuePlugins.end() ||
+        fc.m_priorityGroupPlugins.find(sha) != fc.m_priorityGroupPlugins.end())
     {
         SWSS_LOG_ERROR("Plugin %s already registered", sha.c_str());
     }
@@ -999,8 +1023,9 @@ void FlexCounter::addPriorityGroupCounterPlugin(
     std::lock_guard<std::mutex> lkMgr(fc.m_mtx);
 
     if (fc.m_portPlugins.find(sha) != fc.m_portPlugins.end() ||
-            fc.m_queuePlugins.find(sha) != fc.m_queuePlugins.end() ||
-            fc.m_priorityGroupPlugins.find(sha) != fc.m_priorityGroupPlugins.end())
+        fc.m_rifPlugins.find(sha) != fc.m_rifPlugins.end() ||
+        fc.m_queuePlugins.find(sha) != fc.m_queuePlugins.end() ||
+        fc.m_priorityGroupPlugins.find(sha) != fc.m_priorityGroupPlugins.end())
     {
         SWSS_LOG_ERROR("Plugin %s already registered", sha.c_str());
     }
@@ -1040,6 +1065,7 @@ void FlexCounter::removeCounterPlugin(
 
     fc.m_queuePlugins.erase(sha);
     fc.m_portPlugins.erase(sha);
+    fc.m_rifPlugins.erase(sha);
     fc.m_priorityGroupPlugins.erase(sha);
     fc.m_bufferPoolPlugins.erase(sha);
 
@@ -1062,6 +1088,7 @@ void FlexCounter::removeCounterPlugin(
 
     fc.m_queuePlugins.clear();
     fc.m_portPlugins.clear();
+    fc.m_rifPlugins.clear();
     fc.m_priorityGroupPlugins.clear();
     fc.m_bufferPoolPlugins.clear();
 
@@ -1117,6 +1144,7 @@ bool FlexCounter::allPluginsEmpty()
     return m_priorityGroupPlugins.empty() &&
            m_queuePlugins.empty() &&
            m_portPlugins.empty() &&
+           m_rifPlugins.empty() &&
            m_bufferPoolPlugins.empty();
 }
 
@@ -1650,6 +1678,17 @@ void FlexCounter::runPlugins(
     for (const auto& sha : m_portPlugins)
     {
         runRedisScript(db, sha, portList, argv);
+    }
+
+    std::vector<std::string> rifList;
+    rifList.reserve(m_rifCounterIdsMap.size());
+    for (const auto& kv : m_rifCounterIdsMap)
+    {
+        rifList.push_back(sai_serialize_object_id(kv.first));
+    }
+    for (const auto& sha : m_rifPlugins)
+    {
+        runRedisScript(db, sha, rifList, argv);
     }
 
     std::vector<std::string> queueList;
